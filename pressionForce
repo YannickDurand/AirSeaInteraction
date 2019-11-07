@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jun 28 09:33:16 2019
+
+@author: durand
+"""
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.cm as cm
+
+
+#import MITgcmutils as mit
+from scipy.signal import savgol_filter
+from scipy.optimize import curve_fit
+import scipy.stats
+
+from stockDataPressionForce import *
+from stockData import *
+from netCDF4 import Dataset
+from Operator import *
+from plotKES import *
+
+#%%
+# =============================================================================
+# ------------------------Selection Variable------------------------
+# =============================================================================
+deltaT=6*3600.                #en s
+maxT=0.
+alphat = 2e-4
+rho0=999.8
+tStart=7*4
+dx=1200.
+#%%
+# =============================================================================
+# #-------------------------Cell for NetCDF------------------------------------
+# =============================================================================
+#
+###############################################################################
+#PATH3='/dsk1/ydurand/T03R01N3'
+PATH='/home/durand/OAC/Control_Case/T03R01N3'
+
+fileS='/state.nc'
+fileKEs='/diagKEs.nc'
+grid='/grid.nc'
+filePE='/tracer_wb.nc'
+fileTave='/diag_ocnTave.nc'
+filePhy='/phiHyd.nc'
+
+dataGrid=(PATH+grid)
+dataNetCDFK=(PATH+fileKEs)
+dataNetCDFS=(PATH+fileS)
+dataNetPE=(PATH+filePE)
+dataNetTave=(PATH+fileTave)
+dataNetPhi=(PATH+filePhy)
+
+#-------------------------------load grid-------------------------------------#
+xxx,si_x,nbIter2,time2=dimRes(dataNetCDFS)
+nbIter,time=getTime(dataNetCDFK)
+time=np.divide(time[:],(24*3600))
+si_y=si_x
+
+RAC,zzt,zzl,zzd,zzc,dimZZ=dimGrid(dataGrid)
+areaGrid=RAC[np.newaxis,:,:]*zzd[:,np.newaxis,np.newaxis]
+
+dz=np.ones((30,330,330))
+dz=dz*zzc[:,np.newaxis,np.newaxis]
+#%%
+
+# =============================================================================
+            # #####-----     Pression Field    -----##### # 
+# =============================================================================
+
+
+######Snap Shot
+t=50
+
+
+
+
+
+phy=getPhi(dataNetPhi,t)
+ujk=getU(dataNetTave,t)
+ujk=ucc(ujk)
+vik=getV(dataNetTave,t)
+vik=vcc(vik)
+
+phyU=phy*ujk
+phyV=phy*vik
+divXphyU=np.gradient(phyU,dx,axis=2)
+divYphyV=np.gradient(phyV,dx,axis=1)
+divTot=divXphyU+divYphyV
+
+#%%
+# Mean
+stockDivTot=np.zeros((60,30,330,330))
+stockWWW=np.zeros((60,30,330,330))
+stockWVEL=np.zeros((60,30,330,330))
+
+
+for i in range(60):
+    t=i+100
+    phy=getPhi(dataNetPhi,t)
+    ujk=getU(dataNetTave,t)
+    ujk=ucc(ujk)
+    vik=getV(dataNetTave,t)
+    vik=vcc(vik)
+    
+    phyU=phy*ujk
+    phyV=phy*vik
+    divXphyU=np.gradient(phyU,dx,axis=2)
+    divYphyV=np.gradient(phyV,dx,axis=1)
+    divTot=divXphyU+divYphyV
+    
+    stockDivTot[i]=divTot
+    
+    stockWWW[i]=getWbonX(dataNetPE,t)
+    stockWVEL[i]=getWVEL(dataNetTave,t)
+    print(i)
+
+meanDivTot=np.mean(stockDivTot,axis=0)
+meanWWW=np.mean(stockWWW,axis=0)
+meanWVEL=np.mean(stockWVEL,axis=0)
+
+dTdz=partwz02(meanWVEL,dz,30,330,330)
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

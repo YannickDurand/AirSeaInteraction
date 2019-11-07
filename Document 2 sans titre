@@ -1,0 +1,2 @@
+ffmpeg -framerate 1 -pattern_type glob -i '*.png' -c:v ffv1 out.avi
+
